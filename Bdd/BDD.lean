@@ -59,23 +59,6 @@ lemma denotation_independentOf_of_geq_nvars {n : Nat} {i : Fin n} {B : BDD} {h1 
   simp only [Vector.getElem_take]
   rw [Vector.getElem_set_ne _ _ (by omega)]
 
-/-- The `denotation` of a BDD only depends on `Nary.Dependency` of the denotation -/
-lemma denotation_eq_of_forall_dependency {n : ℕ} {B : BDD} {h} {I J : Vector Bool n} :
-    (∀ i : Nary.Dependency (B.denotation h), I[i.1] = J[i.1]) → B.denotation h I = B.denotation h J := by
-  simp only [denotation, evaluate, lift_nvars, Nary.DependsOn, Nary.IndependentOf, Fin.getElem_fin,
-    Evaluate.evaluate_evaluate]
-  intro h1
-  apply OBdd.evaluate_eq_of_forall_usesVar
-  intro i h2
-  rw [OBdd.usesVar_iff_dependsOn_of_reduced (B.lift h).hred, ← Evaluate.evaluate_evaluate] at h2
-  specialize h1 ⟨i, h2⟩
-  simp_all only [Fin.getElem_fin]
-
-/-- If a BDD B has a different `denotation` for two vectors, then these vectors differ on a dependency of B. -/
-lemma denotation_ne_implies_dependency_ne {n : ℕ} {B : BDD} {h} {I J : Vector Bool n} :
-    B.denotation h I ≠ B.denotation h J → ∃ i : Nary.Dependency (B.denotation h), I[i.1] ≠ J[i.1] := by
-  grind only [denotation_eq_of_forall_dependency]
-
 /-- `BDD`s are semantically equivalent when their `denotation`s coincide. -/
 def SemanticEquiv (B C : BDD) := B.denotation (le_max_left ..) = C.denotation (le_max_right ..)
 
@@ -494,7 +477,7 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
     · intro h2
       rw [imp_iff_not_or, not_forall] at h2
       rcases h2 with ⟨v, h2⟩ | ⟨v, h2⟩
-      · have h3 := denotation_ne_implies_dependency_ne h2
+      · have h3 := Nary.ne_implies_dependency_ne h2
         rcases h3 with ⟨j, h3⟩
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Vector.getElem_set, Bool.if_false_left,
           ne_eq, Bool.eq_and_self, Bool.not_eq_eq_eq_not, Bool.not_true, decide_eq_false_iff_not,
@@ -503,13 +486,13 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
         intro h4
         use Vector.ofFn fun j ↦ (v.set i false)[f j]
         apply ne_of_ne_of_eq (ne_comm.1 h2)
-        apply denotation_eq_of_forall_dependency
+        apply Nary.eq_of_forall_dependency_getElem_eq
         intro j'
         specialize h1 j j'
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta, Vector.getElem_set,
           Bool.if_false_left, Bool.if_true_left]
         grind only [= Lean.Grind.toInt_fin, Vector.getElem_set]
-      · have h3 := denotation_ne_implies_dependency_ne h2
+      · have h3 := Nary.ne_implies_dependency_ne h2
         rcases h3 with ⟨j, h3⟩
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta, Vector.getElem_set, Fin.val_inj,
           Bool.if_true_left, ne_eq, Bool.eq_or_self, decide_eq_true_eq, Classical.not_imp,
@@ -518,7 +501,7 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
         intro h4
         use Vector.ofFn fun j ↦ v[f j]
         apply ne_of_ne_of_eq h2
-        apply denotation_eq_of_forall_dependency
+        apply Nary.eq_of_forall_dependency_getElem_eq
         rintro j'
         specialize h1 j j'
         simp only [h3, Vector.getElem_set, Bool.if_true_left, Fin.getElem_fin, Vector.getElem_ofFn,
@@ -553,14 +536,14 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
       calc
         B.denotation le_rfl v
         _ = B.denotation le_rfl (Vector.ofFn fun i ↦ g (f i)) := by
-          apply BDD.denotation_eq_of_forall_dependency
+          apply Nary.eq_of_forall_dependency_getElem_eq
           simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta, hg, implies_true]
         _ = B.denotation le_rfl (Vector.ofFn fun i ↦ !decide (f j = f i) && g (f i)) := h3
         _ = B.denotation le_rfl (v.set j.val false _) := by
-          apply BDD.denotation_eq_of_forall_dependency
+          apply Nary.eq_of_forall_dependency_getElem_eq
           simp only [denotation', Nary.DependsOn, Nary.IndependentOf, Fin.getElem_fin,
             Vector.getElem_ofFn, Fin.eta, Vector.getElem_set, Fin.val_inj, Bool.if_false_left, hg]
-          apply denotation_ne_implies_dependency_ne at h2
+          apply Nary.ne_implies_dependency_ne at h2
           simp [Vector.getElem_set, Fin.val_inj] at h2
           rcases h2 with ⟨j, h2, rfl⟩
           intro j'

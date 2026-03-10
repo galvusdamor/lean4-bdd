@@ -73,6 +73,12 @@ lemma eq_of_forall_dependency_getElem_eq {f : Func n α β} {I J : Vector α n} 
       rw [Vector.getElem_set_ne _ _ (by omega)]
       simp_all only [DependsOn, IndependentOf, Fin.getElem_fin, Fin.val_castSucc]
 
+lemma ne_implies_dependency_ne {f : Func n α β} {I J : Vector α n} :
+    f I ≠ f J → ∃ i : Nary.Dependency f, I[i.1] ≠ J[i.1] := by
+  contrapose
+  simp only [Fin.getElem_fin, ne_eq, not_exists, not_not]
+  exact Nary.eq_of_forall_dependency_getElem_eq
+
 @[simp]
 def restrict (f : Func n α β) : α → Fin n → Func n α β := fun a i I ↦ f (I.set i a)
 
