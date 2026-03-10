@@ -477,7 +477,7 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
     · intro h2
       rw [imp_iff_not_or, not_forall] at h2
       rcases h2 with ⟨v, h2⟩ | ⟨v, h2⟩
-      · have h3 := Nary.ne_implies_dependency_ne h2
+      · have h3 := Nary.ne_implies_dependency_getElem_ne h2
         rcases h3 with ⟨j, h3⟩
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Vector.getElem_set, Bool.if_false_left,
           ne_eq, Bool.eq_and_self, Bool.not_eq_eq_eq_not, Bool.not_true, decide_eq_false_iff_not,
@@ -492,7 +492,7 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta, Vector.getElem_set,
           Bool.if_false_left, Bool.if_true_left]
         grind only [= Lean.Grind.toInt_fin, Vector.getElem_set]
-      · have h3 := Nary.ne_implies_dependency_ne h2
+      · have h3 := Nary.ne_implies_dependency_getElem_ne h2
         rcases h3 with ⟨j, h3⟩
         simp only [Fin.getElem_fin, Vector.getElem_ofFn, Fin.eta, Vector.getElem_set, Fin.val_inj,
           Bool.if_true_left, ne_eq, Bool.eq_or_self, decide_eq_true_eq, Classical.not_imp,
@@ -543,7 +543,7 @@ lemma relabel_dependsOn {n} {B : BDD} {f : Fin B.nvars → Fin n} {hf h i} :
           apply Nary.eq_of_forall_dependency_getElem_eq
           simp only [denotation', Nary.DependsOn, Nary.IndependentOf, Fin.getElem_fin,
             Vector.getElem_ofFn, Fin.eta, Vector.getElem_set, Fin.val_inj, Bool.if_false_left, hg]
-          apply Nary.ne_implies_dependency_ne at h2
+          apply Nary.ne_implies_dependency_getElem_ne at h2
           simp [Vector.getElem_set, Fin.val_inj] at h2
           rcases h2 with ⟨j, h2, rfl⟩
           intro j'
