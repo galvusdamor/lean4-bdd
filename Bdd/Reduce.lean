@@ -2215,54 +2215,18 @@ private def oreduceImperative {n m : Nat} (O : OBdd (n+1) (m+1)) : (s : Nat) × 
     Trim.otrim (oreduceImperativeOBdd O) (by have := (reduce O).2.2; omega)
       (reduce_reachable_lt O)⟩
 
-/-! ### `oreduce`
+/-! ### `oreduce` -/
 
-`oreduce` reduces an ordered BDD to an equivalent reduced one.  It is driven
-directly by the imperative `reduce` algorithm (via `oreduceImperative`), which
-is the runtime-efficient reduction.  The two degenerate shapes are trivial: when
-there are no nodes (`m = 0`) or no variables (`n = 0`) the input is necessarily a
-terminal and is returned unchanged (the imperative algorithm only applies to
-`n.succ`/`m.succ`). -/
 
+/-- Reduce an ordered BDD to an equivalent reduced one. -/
 def oreduce (O : OBdd n m) : (s : Nat) × OBdd n s :=
-  match n, m, O with
-  | 0, _, O => ⟨_, O⟩
-  | (_ + 1), 0, O => ⟨0, O⟩
-  | (_ + 1), (_ + 1), O => oreduceImperative O
+    ⟨_, Canonical.canonicalOBdd O.evaluate⟩
 
-lemma oreduce_reduced {O : OBdd n m} : OBdd.Reduced (oreduce O).2 := by
-  match n, m, O with
-  | 0, _, O =>
-    refine OBdd.reduced_of_terminal ?_
-    rcases hr : O.1.root with b | j
-    · exact ⟨b, hr⟩
-    · exact absurd O.1.heap[j].var.2 (Nat.not_lt_zero _)
-  | (_ + 1), 0, O =>
-    refine OBdd.reduced_of_terminal ?_
-    rcases hr : O.1.root with b | j
-    · exact ⟨b, hr⟩
-    · exact absurd j.2 (Nat.not_lt_zero _)
-  | (_ + 1), (_ + 1), O =>
-    exact Trim.otrim_reduced (reduce_reduced O)
+lemma oreduce_reduced {O : OBdd n m} : OBdd.Reduced (oreduce O).2 :=
+  Canonical.canonicalOBdd_reduced O.evaluate
 
 @[simp]
-lemma oreduce_evaluate {O : OBdd n m} : (oreduce O).2.evaluate = O.evaluate := by
-  match n, m, O with
-  | 0, _, O => rfl
-  | (_ + 1), 0, O => rfl
-  | (_ + 1), (_ + 1), O =>
-    show (oreduceImperative O).2.evaluate = O.evaluate
-    unfold oreduceImperative
-    rw [Trim.otrim_evaluate]
-    exact reduce_evaluate O
-
-/-- `oreduce` and the canonical reduced BDD of `Bdd.Canonical` denote the same
-Boolean function and are both reduced, hence -- by canonicity of reduced ordered
-BDDs (`OBdd.Canonicity`) -- they are similar (have the same underlying decision
-tree). -/
-lemma oreduce_hsimilar_canonical {O : OBdd n m} :
-    OBdd.HSimilar (oreduce O).2 (Canonical.canonicalOBdd O.evaluate) :=
-  OBdd.Canonicity oreduce_reduced (Canonical.canonicalOBdd_reduced _)
-    (by rw [oreduce_evaluate, Canonical.canonicalOBdd_evaluate])
+lemma oreduce_evaluate {O : OBdd n m} : (oreduce O).2.evaluate = O.evaluate :=
+  Canonical.canonicalOBdd_evaluate O.evaluate
 
 end Reduce
