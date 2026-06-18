@@ -77,7 +77,7 @@ private def set_id_to_nid : Fin m → StateM (State n m) Unit :=
 
 private def set_out {n m : Nat} : Node n.succ m.succ → StateM (State n.succ m.succ) Unit :=
   fun N ↦ get >>= fun s ↦
-    have : (s.nid.1 + 1) % m.succ < m.succ := by simp [Nat.mod_lt]
+    have : (s.nid.1 + 1) % m.succ < m.succ := Nat.mod_lt _ (Nat.succ_pos _)
     set (⟨s.out.set ((s.nid.1 + 1) % m.succ) N, s.ids, s.nid + 1⟩ : State n.succ m.succ)
 
 private def populate_queue (v : Vector (Node n m) m) (acc : List ((Pointer m × Pointer m) × Fin m)) : List (Fin m) → StateM (State n m) (List ((Pointer m × Pointer m) × Fin m))
@@ -112,10 +112,22 @@ private def process_queue {n m : Nat} (v : Vector (Node n.succ m.succ) m.succ) (
   | head :: tail => do
     let newkey ← process_record v curkey head
     process_queue v newkey tail
+/-- A *total* lexicographic order on dedup keys `((low, high), j)`.
+
+The `Pointer` order `Pointer.le` is total, but the `≤` induced on a product is
+the *product* (partial) order, under which `List.mergeSort` need not place equal
+`(low, high)` keys contiguously.  Since `process_queue` only merges *adjacent*
+equal keys, sorting with the product order can leave isomorphic nodes unmerged
+(producing a non-reduced result).  Sorting with this genuinely total order groups
+all equal keys together so that isomorphic nodes are reliably merged. -/
+private def keyLe {m : Nat} (a b : (Pointer m × Pointer m) × Fin m) : Bool :=
+  if a.1.1 = b.1.1 then
+    if a.1.2 = b.1.2 then decide (a.2 ≤ b.2) else decide (a.1.2 ≤ b.1.2)
+  else decide (a.1.1 ≤ b.1.1)
 
 private def step {n m : Nat} (v : Vector (Node n.succ m.succ) m.succ) (vlist : Vector (List (Fin m.succ)) n.succ) (i : Fin n.succ) : StateM (State n.succ m.succ) Unit := do
   let Q ← populate_queue v [] vlist[i]
-  process_queue v ⟨node 0, node 0⟩ (List.mergeSort Q)
+  process_queue v ⟨node 0, node 0⟩ (List.mergeSort Q keyLe)
 
 private def loop {n m : Nat} (v : Vector (Node n.succ m.succ) m.succ) (r : Fin m.succ) (vlist : Vector (List (Fin m.succ)) n.succ) (i : Fin n.succ) : StateM (State n.succ m.succ) (Bdd n.succ m.succ) := do
   step v vlist i
