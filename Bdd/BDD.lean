@@ -760,5 +760,7 @@ def count (B : BDD) : Nat := Count.count B.obdd
 
 lemma count_eq_card {B : BDD} : B.count = Fintype.card { I // B.denotation' I = true } := by
   simp [count, denotation', denotation, lift, Evaluate.evaluate_evaluate, Count.count_corrent, Count.numSolutions, Count.Solution]
+  congr 1
+  exact Subsingleton.elim _ _
 
 end BDD

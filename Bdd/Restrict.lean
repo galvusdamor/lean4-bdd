@@ -371,7 +371,7 @@ private def restrict_helper (O : OBdd n m) (b : Bool) (i : Fin n) (s0 : State n 
                       have that := OBdd.evaluate_node'' O_root_def
                       rw [that]
                       rw [Nary.restrict_if]
-                      rw [hlt]
+                      simp only [hlt]
                       simp only [OBdd.high_heap_eq_heap, hb, Fin.getElem_fin]
                       ext I
                       conv =>
@@ -461,7 +461,7 @@ private def restrict_helper (O : OBdd n m) (b : Bool) (i : Fin n) (s0 : State n 
                       have that := OBdd.evaluate_node'' O_root_def
                       rw [that]
                       rw [Nary.restrict_if]
-                      rw [hlt]
+                      simp only [hlt]
                       simp only [OBdd.low_heap_eq_heap, hb, Fin.getElem_fin]
                       ext I
                       conv =>

@@ -697,6 +697,18 @@ lemma OBdd.var_lt_low_var {O : OBdd n m} {h : O.1.root = node j} :
   have e := Bdd.edge_of_low (h := h) O.1
   exact @O.2 O.1.toRelevantPointer ⟨(O.low h).1.root, reachable_of_edge e⟩ e
 
+/-
+Two ordered BDDs with the same decision tree have the same root variable.
+-/
+lemma OBdd.var_eq_of_toTree_eq {n m m' : Nat} {A : OBdd n m} {B : OBdd n m'} :
+    A.toTree = B.toTree → A.var = B.var := by
+  cases left : A.1.root <;> cases right : B.1.root;
+  · simp_all +decide [ OBdd.var, Bdd.var, Pointer.toVar ];
+  · rw [OBdd.toTree_terminal' left, OBdd.toTree_node right] at * ; aesop;
+  · intro h; have := congr_arg ( fun x => x ) h; simp_all +decide [ OBdd.toTree_node, OBdd.toTree_terminal' ] ;
+  · rw [ OBdd.toTree_node left, OBdd.toTree_node right ];
+    aesop
+
 lemma OBdd.independentOf_lt_root (O : OBdd n m) (i : Fin O.var) :
     Nary.IndependentOf (O.evaluate) ⟨i.1, Fin.val_lt_of_le i (Fin.is_le _)⟩ := by
   cases h : O.1.root with
@@ -787,7 +799,9 @@ lemma OBdd.evaluate_low_eq_evaluate_set_false {n m} {O : OBdd n m} {j : Fin m} {
 lemma OBdd.evaluate_high_eq_of_evaluate_eq_and_var_eq' {n m m' : Nat} {O : OBdd n m} {U : OBdd n m'} {j : Fin m} {i : Fin m'} {ho : O.1.root = node j} {hu : U.1.root = node i} :
     O.evaluate = U.evaluate → O.1.heap[j].var = U.1.heap[i].var → (O.high ho).evaluate = (U.high hu).evaluate := by
   intro h eq
-  rw [evaluate_high_eq_evaluate_set_true, h, eq ,← evaluate_high_eq_evaluate_set_true]
+  rw [evaluate_high_eq_evaluate_set_true, h]
+  simp only [eq]
+  rw [← evaluate_high_eq_evaluate_set_true (O := U)]
 
 lemma OBdd.evaluate_high_eq_of_evaluate_eq_and_var_eq {n m} {O U : OBdd n m} {j i : Fin m} {ho : O.1.root = node j} {hu : U.1.root = node i} :
     O.evaluate = U.evaluate → O.1.heap[j].var = U.1.heap[i].var → (O.high ho).evaluate = (U.high hu).evaluate := evaluate_high_eq_of_evaluate_eq_and_var_eq'
@@ -795,7 +809,9 @@ lemma OBdd.evaluate_high_eq_of_evaluate_eq_and_var_eq {n m} {O U : OBdd n m} {j 
 lemma OBdd.evaluate_low_eq_of_evaluate_eq_and_var_eq' {n m m' : Nat} {O : OBdd n m} {U : OBdd n m'} {j : Fin m} {i : Fin m'} {ho : O.1.root = node j} {hu : U.1.root = node i} :
   O.evaluate = U.evaluate → O.1.heap[j].var = U.1.heap[i].var → (O.low ho).evaluate = (U.low hu).evaluate := by
   intro h eq
-  rw [evaluate_low_eq_evaluate_set_false, h, eq ,← evaluate_low_eq_evaluate_set_false]
+  rw [evaluate_low_eq_evaluate_set_false, h]
+  simp only [eq]
+  rw [← evaluate_low_eq_evaluate_set_false (O := U)]
 
 lemma OBdd.evaluate_low_eq_of_evaluate_eq_and_var_eq {n m} {O U : OBdd n m} {j i : Fin m} {ho : O.1.root = node j} {hu : U.1.root = node i} :
   O.evaluate = U.evaluate → O.1.heap[j].var = U.1.heap[i].var → (O.low ho).evaluate = (U.low hu).evaluate := evaluate_low_eq_of_evaluate_eq_and_var_eq'
@@ -1467,8 +1483,10 @@ lemma OBdd.dependsOn_of_usesVar_of_reduced {O : OBdd n m} :
   cases Relation.reflTransGen_swap.mp hj with
   | refl =>
     rw [← O_def]
-    rw [evaluate_node'' (by rw [O_def])]
-    rw [show O.1.heap = heap by rw [O_def], hi]
+    simp only [evaluate_node'' (show O.1.root = node j by rw [O_def])]
+    have hheap : O.1.heap = heap := by rw [O_def]
+    have hi' : O.1.heap[j].var = i := by rw [hheap]; exact hi
+    simp only [hi']
     simp only [Fin.getElem_fin, Vector.getElem_set_self, ↓reduceIte, ne_eq]
     rw [← not_forall]
     intro contra

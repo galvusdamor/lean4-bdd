@@ -12,7 +12,7 @@ def BDD_of_CNF (C : Std.Sat.CNF (Fin n)) : BDD := (C.map BDD_of_clause).foldr BD
 @[simp]
 lemma BDD_of_literal_nvars : (BDD_of_literal (n := n) C).nvars ≤ n := by
   simp only [BDD_of_literal]
-  split <;> (simp; omega)
+  split <;> (simp; try omega)
 
 @[simp]
 lemma BDD_of_clause_nvars : (BDD_of_clause (n := n) C).nvars ≤ n := by
